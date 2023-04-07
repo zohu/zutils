@@ -1,4 +1,4 @@
-module zutils
+module github.com/zohu/zutils
 
 go 1.20
 
