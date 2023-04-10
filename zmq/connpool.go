@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"github.com/zohu/zlog"
-	"github.com/zohu/zutils"
+	"github.com/zohu/zutils/zid"
 	"sync"
 	"time"
 )
@@ -69,7 +69,7 @@ func Init(conf *RabbitmqConfig) {
 			}
 			return &Conn{
 				c,
-				zutils.NewUuid(),
+				zid.NewUuid(),
 				time.Now().Unix(),
 			}, nil
 		},
