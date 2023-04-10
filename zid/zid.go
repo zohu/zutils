@@ -17,22 +17,24 @@ func NewUuid() string {
 
 var node *snowflake.Node
 
-func InitSnowflake(machineID int64) {
-	var err error
-	snowflake.Epoch = time.Now().UnixMilli()
-	node, err = snowflake.NewNode(machineID)
-	if err != nil {
-		panic(err)
-	}
+// InitSnowflake
+// @Description:
+// @param date 2006-01-02
+// @param machineID
+func InitSnowflake(date string, machineID int64) {
+	var st time.Time
+	st, _ = time.Parse("2006-01-02", date)
+	snowflake.Epoch = st.UnixNano() / 1000000
+	node, _ = snowflake.NewNode(machineID)
 }
 
 // NewSnowflake
 // @Auth: oak  2021-10-15 18:36:13
 // @Description:  雪花ID
 // @return string
-func NewSnowflake() int64 {
+func NewSnowflake() string {
 	if node == nil {
 		panic("Please initialize snowflake first")
 	}
-	return node.Generate().Int64()
+	return node.Generate().String()
 }
