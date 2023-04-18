@@ -2,6 +2,7 @@ package zutils
 
 import (
 	"encoding/json"
+	"github.com/zohu/zutils/types"
 	"net"
 	"reflect"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 // @Description: 返回第一个真值
 // @param args
 // @return T
-func FirstValue[T Object](args ...T) T {
+func FirstValue[T types.Object](args ...T) T {
 	for _, item := range args {
 		// 跳过无效值
 		if !reflect.ValueOf(item).IsValid() {
