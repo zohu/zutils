@@ -2,46 +2,44 @@ package zutils
 
 import (
 	"encoding/json"
-	"github.com/zohu/zutils/types"
 	"net"
 	"reflect"
 	"strconv"
 	"time"
 )
 
-// FirstValue
-// @Description: 返回第一个真值
-// @param args
-// @return T
-func FirstValue[T types.Object](args ...T) T {
+func FirstTruthString(args ...string) string {
 	for _, item := range args {
-		// 跳过无效值
-		if !reflect.ValueOf(item).IsValid() {
-			continue
-		}
-		switch reflect.TypeOf(item).Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128,
-			reflect.Uintptr, reflect.Ptr:
-			if !reflect.ValueOf(item).IsZero() {
-				return item
-			}
-		case reflect.String:
-			if reflect.ValueOf(item).String() != "" {
-				return item
-			}
-		case reflect.Bool:
-			if reflect.ValueOf(item).Bool() {
-				return item
-			}
-		default:
-			if !reflect.ValueOf(item).IsNil() {
-				return item
-			}
+		if item != "" {
+			return item
 		}
 	}
-	// 如果无真值，返回第一个
+	return args[0]
+}
+func FirstTruthInt(args ...int) int {
+	for _, item := range args {
+		if item != 0 {
+			return item
+		}
+	}
+	return args[0]
+}
+
+func FirstTruthInt64(args ...int64) int64 {
+	for _, item := range args {
+		if item != 0 {
+			return item
+		}
+	}
+	return args[0]
+}
+
+func FirstTruthFloat64(args ...float64) float64 {
+	for _, item := range args {
+		if item != 0 {
+			return item
+		}
+	}
 	return args[0]
 }
 
