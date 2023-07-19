@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"errors"
 	"io"
 )
 
@@ -80,6 +81,9 @@ func AesDecryptECB(encrypted, key []byte) (decrypted []byte, err error) {
 	trim := 0
 	if len(decrypted) > 0 {
 		trim = len(decrypted) - int(decrypted[len(decrypted)-1])
+	}
+	if trim < 0 || trim > len(decrypted) {
+		return nil, errors.New("aes decrypt error")
 	}
 	return decrypted[:trim], nil
 }
