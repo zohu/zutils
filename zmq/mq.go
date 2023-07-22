@@ -5,12 +5,14 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func Acquire() (*Conn, error) {
-	return pool.Acquire()
+type Queue struct {
+	conn    *Conn
+	channel *amqp.Channel
+	queue   *amqp.Queue
 }
 
-func Release(c *Conn) error {
-	return pool.Release(c)
+func (q *Queue) Release() error {
+	return pool.Release(q.conn)
 }
 
 // Publish
@@ -19,20 +21,21 @@ func Release(c *Conn) error {
 // @param body
 // @return error
 func Publish(name QueueName, body []byte) error {
-	if c, q, err := queue(name); err != nil {
+	q, err := queue(name)
+	if err != nil {
 		return err
-	} else {
-		return c.Publish(
-			"",
-			q.Name,
-			false,
-			false,
-			amqp.Publishing{
-				DeliveryMode: amqp.Persistent,
-				ContentType:  "application/json",
-				Body:         body,
-			})
 	}
+	defer q.Release()
+	return q.channel.Publish(
+		"",
+		q.queue.Name,
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         body,
+		})
 }
 
 // Subscribe
@@ -41,12 +44,12 @@ func Publish(name QueueName, body []byte) error {
 // @param sname
 // @param ch
 // @return error
-func Subscribe(name QueueName, sname ServeName) (<-chan amqp.Delivery, error) {
-	if c, q, err := queue(name); err != nil {
-		return nil, err
+func Subscribe(name QueueName, sname ServeName) (*Queue, <-chan amqp.Delivery, error) {
+	if q, err := queue(name); err != nil {
+		return nil, nil, err
 	} else {
-		return c.Consume(
-			q.Name,
+		del, err := q.channel.Consume(
+			q.queue.Name,
 			sname.String(),
 			false,
 			false,
@@ -54,6 +57,7 @@ func Subscribe(name QueueName, sname ServeName) (<-chan amqp.Delivery, error) {
 			false,
 			nil,
 		)
+		return q, del, err
 	}
 }
 
@@ -63,18 +67,24 @@ func Subscribe(name QueueName, sname ServeName) (<-chan amqp.Delivery, error) {
 // @return *amqp.Channel
 // @return *amqp.Queue
 // @return error
-func queue(name QueueName) (*amqp.Channel, *amqp.Queue, error) {
-	cn, err := Acquire()
+func queue(name QueueName) (*Queue, error) {
+	cn, err := pool.Acquire()
 	if err != nil {
-		return nil, nil, fmt.Errorf("消息队列连接失败 %s", err.Error())
+		return nil, fmt.Errorf("消息队列连接失败 %s", err.Error())
 	}
 	ch, err := cn.Channel()
 	if err != nil {
-		return nil, nil, fmt.Errorf("消息队列建立通道失败 %s", err.Error())
+		_ = pool.Release(cn)
+		return nil, fmt.Errorf("消息队列建立通道失败 %s", err.Error())
 	}
-	queue, err := ch.QueueDeclare(string(name), true, false, false, false, nil)
+	qu, err := ch.QueueDeclare(string(name), true, false, false, false, nil)
 	if err != nil {
-		return nil, nil, fmt.Errorf("消息队列建立队列失败 %s", err.Error())
+		_ = pool.Release(cn)
+		return nil, fmt.Errorf("消息队列建立队列失败 %s", err.Error())
 	}
-	return ch, &queue, nil
+	return &Queue{
+		conn:    cn,
+		channel: ch,
+		queue:   &qu,
+	}, nil
 }

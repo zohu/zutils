@@ -29,8 +29,7 @@ type options struct {
 }
 
 type Stats struct {
-	total   int
-	created int64
+	total int
 }
 
 type Conn struct {
@@ -126,7 +125,6 @@ func (p *Pool) getOrCreate() (*Conn, error) {
 		return nil, err
 	}
 	p.synchro.stats.total++
-	p.synchro.stats.created++
 	p.synchro.Unlock()
 	return connection, nil
 }
@@ -156,7 +154,6 @@ func (p *Pool) initConnection() {
 		}
 		p.synchro.conn <- con
 		p.synchro.stats.total++
-		p.synchro.stats.created++
 	}
 }
 
