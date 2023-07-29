@@ -1,4 +1,4 @@
-package zbuffpool
+package zbuff
 
 import (
 	"bytes"
